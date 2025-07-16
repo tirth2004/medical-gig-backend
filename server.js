@@ -150,6 +150,95 @@ app.post("/admin/signin", async (req, res) => {
   }
 });
 
+// Protected admin routes (require authentication)
+app.post("/admin/countries", authenticateToken, async (req, res) => {
+  try {
+    const { name, flag_image, body } = req.body;
+
+    // Validate input
+    if (!name || !flag_image || !body) {
+      return res.status(400).json({
+        error: "Name, flag_image, and body are required",
+      });
+    }
+
+    // Check if country already exists
+    const existingCountryResult = await db.query(
+      "SELECT name FROM countries WHERE name = $1",
+      [name]
+    );
+
+    if (existingCountryResult.rows.length > 0) {
+      return res.status(400).json({
+        error: "Country with this name already exists",
+      });
+    }
+
+    // Insert into database
+    const insertResult = await db.query(
+      "INSERT INTO countries (name, flag_image, body) VALUES ($1, $2, $3) RETURNING id, name, flag_image, created_at",
+      [name, flag_image, body]
+    );
+
+    const data = insertResult.rows[0];
+
+    res.status(201).json({
+      message: "Country created successfully",
+      country: data,
+    });
+  } catch (error) {
+    console.error("Server error:", error);
+    res.status(500).json({
+      error: "Internal server error",
+    });
+  }
+});
+
+// Get all countries (public route)
+app.get("/countries", async (req, res) => {
+  try {
+    const result = await db.query(
+      "SELECT id, name, flag_image, created_at FROM countries ORDER BY name"
+    );
+
+    res.json({
+      countries: result.rows,
+    });
+  } catch (error) {
+    console.error("Server error:", error);
+    res.status(500).json({
+      error: "Internal server error",
+    });
+  }
+});
+
+// Get country by ID (public route)
+app.get("/countries/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await db.query(
+      "SELECT id, name, flag_image, body, created_at, updated_at FROM countries WHERE id = $1",
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        error: "Country not found",
+      });
+    }
+
+    res.json({
+      country: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Server error:", error);
+    res.status(500).json({
+      error: "Internal server error",
+    });
+  }
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
