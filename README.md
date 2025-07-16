@@ -41,12 +41,18 @@ Backend API for medical website with admin CMS functionality.
 ### Admin Routes
 
 - `POST /admin/admins` - Create a new admin user
+- `POST /admin/signin` - Admin signin (get JWT token)
 
 ### Example Usage
 
 ```bash
 # Create admin
 curl -X POST http://localhost:3000/admin/admins \
+  -H "Content-Type: application/json" \
+  -d '{"username": "admin1", "password": "securepass123"}'
+
+# Signin admin
+curl -X POST http://localhost:3000/admin/signin \
   -H "Content-Type: application/json" \
   -d '{"username": "admin1", "password": "securepass123"}'
 ```
