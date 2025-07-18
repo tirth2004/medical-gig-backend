@@ -28,7 +28,12 @@ const authenticateToken = (req, res, next) => {
 };
 
 // Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 // Basic route
@@ -194,6 +199,85 @@ app.post("/admin/countries", authenticateToken, async (req, res) => {
   }
 });
 
+// Add college (admin route)
+app.post("/admin/colleges", authenticateToken, async (req, res) => {
+  try {
+    const {
+      name,
+      country,
+      state,
+      year_of_establishment,
+      logo_link,
+      intake,
+      duration,
+      recognition,
+      medium,
+      intro,
+      course_fees,
+      admission_eligibility,
+      benefits,
+      campus_info,
+    } = req.body;
+
+    // Validate required fields
+    if (!name || !country || !state || !year_of_establishment) {
+      return res.status(400).json({
+        error: "name, country, state, and year_of_establishment are required",
+      });
+    }
+
+    // Check if country exists
+    const countryResult = await db.query(
+      "SELECT name FROM countries WHERE name = $1",
+      [country]
+    );
+    if (countryResult.rows.length === 0) {
+      return res.status(400).json({ error: "Country does not exist" });
+    }
+
+    // Check if college with same name and country exists
+    const duplicateCheck = await db.query(
+      "SELECT id FROM colleges WHERE name = $1 AND country = $2",
+      [name, country]
+    );
+    if (duplicateCheck.rows.length > 0) {
+      return res
+        .status(400)
+        .json({ error: "College with this name and country already exists" });
+    }
+    // Insert college
+    const insertResult = await db.query(
+      `INSERT INTO colleges
+        (name, country, state, year_of_establishment, logo_link, intake, duration, recognition, medium, intro, course_fees, admission_eligibility, benefits, campus_info)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+       RETURNING *`,
+      [
+        name,
+        country,
+        state,
+        year_of_establishment,
+        logo_link,
+        intake,
+        duration,
+        recognition,
+        medium,
+        intro,
+        course_fees,
+        admission_eligibility,
+        benefits,
+        campus_info,
+      ]
+    );
+    res.status(201).json({
+      message: "College added successfully",
+      college: insertResult.rows[0],
+    });
+  } catch (error) {
+    console.error("Server error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // Get all countries (public route)
 app.get("/countries", async (req, res) => {
   try {
@@ -236,6 +320,34 @@ app.get("/countries/:id", async (req, res) => {
     res.status(500).json({
       error: "Internal server error",
     });
+  }
+});
+
+// View all colleges (public route)
+app.get("/colleges", async (req, res) => {
+  try {
+    const result = await db.query(
+      `SELECT id, logo_link, name, country, state, intake, year_of_establishment, recognition, duration, medium FROM colleges ORDER BY name`
+    );
+    res.json({ colleges: result.rows });
+  } catch (error) {
+    console.error("Server error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// View college by id (public route)
+app.get("/colleges/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await db.query(`SELECT * FROM colleges WHERE id = $1`, [id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "College not found" });
+    }
+    res.json({ college: result.rows[0] });
+  } catch (error) {
+    console.error("Server error:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
