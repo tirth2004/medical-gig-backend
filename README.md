@@ -43,11 +43,25 @@ Backend API for medical website with admin CMS functionality.
 - `POST /admin/admins` - Create a new admin user
 - `POST /admin/signin` - Admin signin (get JWT token)
 - `POST /admin/countries` - Add a new country
+- `PUT /admin/countries/:id` - Update a country
+- `DELETE /admin/countries/:id` - Delete a country
+- `POST /admin/colleges` - Add a new college
+- `PUT /admin/colleges/:id` - Update a college
+- `DELETE /admin/colleges/:id` - Delete a college
+- `POST /admin/blogs` - Add a new blog
+- `PUT /admin/blogs/:id` - Update a blog
+- `DELETE /admin/blogs/:id` - Delete a blog
+- `GET /admin/customers` - Get all customer interests
 
 ### Public Routes
 
 - `GET /countries` - Get all countries
 - `GET /countries/:id` - Get country by ID
+- `GET /colleges` - Get all colleges
+- `GET /colleges/:id` - Get college by ID
+- `GET /blogs` - Get all blogs
+- `GET /blogs/:id` - Get blog by ID
+- `POST /customers` - Register customer interest
 
 ### Example Usage
 
